@@ -24,17 +24,22 @@ namespace CryptoBankVerticalWebApi.Features.Users.Helpers
         //    }
         //}
 
-        public static string GetPasswordHash(string password,string salt)
+        public static string GetPasswordHash(string password, byte[] passwordSalt)
         {
-            var argon2 = new Argon2id(Encoding.UTF8.GetBytes(password))
-            {
-                DegreeOfParallelism = 8,
+
+
+            using (var argon2 = new Argon2id(Encoding.UTF8.GetBytes(password))
+            {   DegreeOfParallelism = 8,
                 MemorySize = 65536,
                 Iterations = 4,
-                Salt = Convert.FromBase64String(salt)
-            };
-            byte[] passwordHash = argon2.GetBytes(32);
-            return (Convert.ToBase64String(passwordHash));
+                Salt = passwordSalt
+            })
+            {
+                byte[] passwordHash = argon2.GetBytes(32);
+                return (Convert.ToBase64String(passwordHash));
+            }
+            
+          
         }
 
         public static string GenerateSalt()
@@ -47,6 +52,6 @@ namespace CryptoBankVerticalWebApi.Features.Users.Helpers
             }
             return Convert.ToBase64String(salt);
         }
-
+     
     }
 }

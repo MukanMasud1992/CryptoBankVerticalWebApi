@@ -16,16 +16,31 @@ namespace CryptoBankVerticalWebApi.Features.Users.Request
     public static class RegisterUser
     {
         //public record Request(string email, string password, DateTime birthDate): IRequest<Response>;
-        public record Request(string email,string password,DateTime birthDate) : IRequest<Response>;
-        public record Response(string result);
+        public record Request( RegisterUserModel registerUserModel) : IRequest<Response>;
+        public record Response(UserModel UserModel);
 
         public class RequestValidator : AbstractValidator<Request>
         {
-            public RequestValidator()
+            public RequestValidator(ApplicationDbContext applicationDbContext)
             {
-                RuleFor(x => x.email).NotEmpty().EmailAddress();
-                RuleFor(x => x.password).NotEmpty();
-                RuleFor(x => x.birthDate).Must(date => IsValidBirthDateMoreThenEightTeen(date)).Must(date=>IsValidBirthDateLessThenHundred(date));
+                ClassLevelCascadeMode = CascadeMode.Stop;
+                RuleFor(x => x.registerUserModel.Email)
+                    .NotEmpty()
+                    .EmailAddress();
+                RuleFor(x => x.registerUserModel.Password)
+                .MinimumLength(3);
+
+                RuleFor(x => x.registerUserModel.BirthDate)
+                    .NotEmpty()
+                    .Must(date=>IsValidBirthDateLessThenHundred(date))
+                    .Must(date=>IsValidBirthDateMoreThenEightTeen(date));
+
+                RuleFor(x => x.registerUserModel.Email).MustAsync(async (x, token) =>
+                {
+                    var isExistUser = await applicationDbContext.Users.AnyAsync(user => user.Email == x);
+
+                    return !isExistUser;
+                }).WithMessage("User already in system");
             }
 
             private bool IsValidBirthDateMoreThenEightTeen(DateTime birthDate)
@@ -54,60 +69,50 @@ namespace CryptoBankVerticalWebApi.Features.Users.Request
             }
             public async Task<Response> Handle(Request request, CancellationToken cancellationToken)
             {
-                try
+                var passwordSalt = PasswordHelper.GenerateSalt();
+                var passwordHash = PasswordHelper.GetPasswordHash(request.registerUserModel.Password, Convert.FromBase64String(passwordSalt));
+                if (request.registerUserModel.Email.Equals(_usersOptions.Value.AdministratorEmail))
                 {
-                    var passwordSalt = PasswordHelper.GenerateSalt();
-                    var passwordHash = PasswordHelper.GetPasswordHash(request.password, passwordSalt);
-                    if (request.email.Equals(_usersOptions.Value.AdministratorEmail))
+                    var admin = new User()
                     {
-                        var admin = await _applicationDbContext.Users.FirstOrDefaultAsync(u => u.Email==request.email);
-                        if (admin!=null)
-                        {
-                            return new Response("the admin email is already in the system");
-                        }
-                        admin = new User()
-                        {
-                            Email = request.email,
-                            PasswordSalt= PasswordHelper.GenerateSalt(),
-                            Password = passwordHash,
-                            BirthDate = request.birthDate.ToUniversalTime(),
-                            CreatedAt = DateTime.Now.ToUniversalTime(),
-                            DateOfRegistration = DateTime.Now.ToUniversalTime(),
-                            Role = UserRole.Administrator,
-
-                        };
-                        _applicationDbContext.Users.Add(admin);
-                        await _applicationDbContext.SaveChangesAsync();
-                        return new Response("Administrator register succes");
-                    }
-                    var user = await _applicationDbContext.Users.FirstOrDefaultAsync(u=>u.Email==request.email);
-           
-                    if (user!=null)
-                    {
-                        return new Response("the user email is already in the system");
-                    }
-                    user = new User()
-                    {
-                        Email = request.email,
-                        PasswordSalt= PasswordHelper.GenerateSalt(),
+                        Email = request.registerUserModel.Email,
+                        PasswordSalt= passwordSalt,
                         Password = passwordHash,
-                        BirthDate = request.birthDate.ToUniversalTime(),
+                        BirthDate = request.registerUserModel.BirthDate.ToUniversalTime(),
                         CreatedAt = DateTime.Now.ToUniversalTime(),
                         DateOfRegistration = DateTime.Now.ToUniversalTime(),
-                        Role = UserRole.User,
+                        Role = UserRole.AdministratorRole,
+
                     };
-
-                    _applicationDbContext.Users.Add(user);
+                    _applicationDbContext.Users.Add(admin);
                     await _applicationDbContext.SaveChangesAsync();
-                    return new Response("User register succes");
+                    return new Response(ToUserModel(admin));
                 }
-                catch (Exception ex)
+                var user = new User()
                 {
-                    return new Response($"User register unsuccessfully + {ex.Message}");
-                }
-            }
-        }
+                    Email = request.registerUserModel.Email,
+                    PasswordSalt= passwordSalt,
+                    Password = passwordHash,
+                    BirthDate = request.registerUserModel.BirthDate.ToUniversalTime(),
+                    CreatedAt = DateTime.Now.ToUniversalTime(),
+                    DateOfRegistration = DateTime.Now.ToUniversalTime(),
+                    Role = UserRole.UserRole,
+                };
 
-        
+                _applicationDbContext.Users.Add(user);
+                await _applicationDbContext.SaveChangesAsync();
+                return new Response(ToUserModel(user));
+            }
+            private static UserModel ToUserModel(User user)
+            {
+                return new UserModel()
+                {
+                    Email = user.Email,
+                    DateOfBirth = user.BirthDate,
+                    DateOfRegistration = user.DateOfRegistration,
+                    UserRole = user.Role
+                };
+            }
+        }     
     }
 }

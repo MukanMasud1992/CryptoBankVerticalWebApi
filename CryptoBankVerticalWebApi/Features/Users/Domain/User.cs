@@ -1,7 +1,13 @@
-﻿namespace CryptoBankVerticalWebApi.Features.Users.Domain
+﻿using CryptoBankVerticalWebApi.Features.Accounts.Domain;
+
+namespace CryptoBankVerticalWebApi.Features.Users.Domain
 {
     public class User
     {
+        public User()
+        {
+            Accounts = new HashSet<Account>();
+        }
         public Int64 Id { get; set; }
         public string Email { get; set; } = string.Empty;
         public string Password { get; set; } = string.Empty;
@@ -12,12 +18,14 @@
         public DateTime CreatedAt { get; set; } = DateTime.Now.ToUniversalTime();
         public DateTime? UpdatedAt { get; set; }
         public DateTime? DeleteAt { get; set; }
+
+        public virtual ICollection<Account> Accounts { get; set; }
     }
 
     public enum UserRole
     {
-        User = 0,
-        Analyst = 1,
-        Administrator = 2,
+        UserRole = 0,
+        AnalystRole = 1,
+        AdministratorRole = 2,
     }
 }
