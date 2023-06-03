@@ -1,11 +1,7 @@
-﻿using CryptoBankVerticalWebApi.Authorization.Requirements;
-using CryptoBankVerticalWebApi.Features.Auth.Model;
-using CryptoBankVerticalWebApi.Features.Users.Domain;
-using CryptoBankVerticalWebApi.Features.Users.Request;
+﻿using CryptoBankVerticalWebApi.Features.Auth.Model;
+using CryptoBankVerticalWebApi.Features.Auth.Requests;
 using MediatR;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Authentication;
 
 namespace CryptoBankVerticalWebApi.Features.Auth.Request.Controllers
 {
@@ -17,10 +13,7 @@ namespace CryptoBankVerticalWebApi.Features.Auth.Request.Controllers
 
         public AuthController(IMediator mediator) => _mediator = mediator;
 
-        [HttpPost("Login")]
-        //public Task<LoginUser.Response> Authenticate(LoginUser.Request request, CancellationToken cancellationToken) =>
-        //    _mediator.Send(request, cancellationToken);
-
+        [HttpPost("login")]
         public async Task<LoginUser.Response> LoginUser(LoginModel loginModel, CancellationToken cancellationToken)
         {
             var request = new LoginUser.Request(loginModel);

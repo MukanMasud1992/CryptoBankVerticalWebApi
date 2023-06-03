@@ -10,7 +10,6 @@ public class RoleRequirement : IAuthorizationRequirement
     {
         RequiredRole = requiredRole;
     }
-
     public UserRole RequiredRole { get; }
 }
 
@@ -22,7 +21,6 @@ public class RoleRequirementHandler : AuthorizationHandler<RoleRequirement>
         {
             context.Succeed(requirement);
         }
-
         return Task.CompletedTask;
     }
 }

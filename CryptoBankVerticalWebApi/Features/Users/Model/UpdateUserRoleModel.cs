@@ -6,5 +6,6 @@ namespace CryptoBankVerticalWebApi.Features.Users.Model
     {
         public string Email { get; set; }
         public string UpdatedRole { get; set; }
+
     }
 }

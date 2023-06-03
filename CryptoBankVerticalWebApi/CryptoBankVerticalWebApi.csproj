@@ -43,7 +43,6 @@
 
   <ItemGroup>
     <Folder Include="Features\Accounts\Helpers\" />
-    <Folder Include="Features\Auth\Domain\" />
   </ItemGroup>
 
 </Project>

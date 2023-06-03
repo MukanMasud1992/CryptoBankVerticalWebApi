@@ -4,10 +4,10 @@ namespace CryptoBankVerticalWebApi.Features.Accounts.Model
 {
     public class AccountModel
     {
-        public Guid Id { get; set; }
+        public long Id { get; set; }
         public string Currency { get; set; }
         public decimal Amount { get; set; }
-        public DateTime DateOfOpening { get; set; }
-        public Int64 UserId { get; set; }
+        public DateTime CreatedAt { get; set; }
+        public long UserId { get; set; }
     }
 }

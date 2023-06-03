@@ -6,7 +6,7 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using System.Data;
 
-namespace CryptoBankVerticalWebApi.Features.Users.Request
+namespace CryptoBankVerticalWebApi.Features.Users.Requests
 {
     public static class UpdateUserRole
     {
@@ -19,18 +19,18 @@ namespace CryptoBankVerticalWebApi.Features.Users.Request
             public RequestValidator(ApplicationDbContext applicationDbContext)
             {
                 ClassLevelCascadeMode = CascadeMode.Stop;
-                RuleFor(x => x.updateUserRoleModel.Email).NotEmpty().EmailAddress();
-                RuleFor(x => x.updateUserRoleModel.UpdatedRole).Must(role => IsValidRole(role))
-                    .WithMessage("This role not find");
+                RuleFor(x => x.updateUserRoleModel.Email)
+                    .Cascade(CascadeMode.Stop)
+                    .NotEmpty()
+                    .EmailAddress();
+                RuleFor(x => x.updateUserRoleModel.UpdatedRole)
+                    .Cascade(CascadeMode.Stop)
+                    .Must(role => IsValidRole(role))
+                    .WithMessage("This role not found");
 
                 RuleFor(x => x.updateUserRoleModel.Email)
-                   .NotEmpty()
-                   .MustAsync(async (x, token) =>
-                   {
-                       var isExistUser = await applicationDbContext.Users.AnyAsync(user => user.Email == x, token);
-
-                       return isExistUser;
-                   }).WithMessage("User not exists in database");
+                    .Cascade(CascadeMode.Stop)
+                    .NotEmpty();
             }
 
             private bool IsValidRole(string role)
@@ -39,7 +39,7 @@ namespace CryptoBankVerticalWebApi.Features.Users.Request
                 {
                     if (Enum.GetName(typeof(UserRole), item) == role)
                     {
-                        return true; // role является допустимой ролью
+                        return true;
                     }
                 }
                 return false;
@@ -53,37 +53,48 @@ namespace CryptoBankVerticalWebApi.Features.Users.Request
             {
                 _applicationDbContext=applicationDbContext;
             }
+
             public async Task<Response> Handle(Request request, CancellationToken cancellationToken)
             {
-                UserRole updateuserRole = (UserRole)Enum.Parse(typeof(UserRole),request.updateUserRoleModel.UpdatedRole);
-                //UserRole updateuserRole = request.updateUserRoleModel.UserRole;
-                var user = await _applicationDbContext.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Email==request.updateUserRoleModel.Email);
-                user = new Domain.User()
+                UserRole updateuserRole = (UserRole)Enum.Parse(typeof(UserRole), request.updateUserRoleModel.UpdatedRole);
+                var user = await _applicationDbContext.Users
+                    .Include(u => u.Roles)
+                    .SingleOrDefaultAsync(u => u.Email==request.updateUserRoleModel.Email);
+                if (user==null)
                 {
-                    Id=user.Id,
-                    Email=user.Email,
-                    BirthDate =user.BirthDate,
-                    DateOfRegistration =user.DateOfRegistration,
-                    CreatedAt=user.CreatedAt,
-                    Password =user.Password,
-                    PasswordSalt=user.PasswordSalt,
-                    Role = updateuserRole,
-                    DeleteAt = user.DeleteAt,
-                    UpdatedAt = DateTime.Now.ToUniversalTime(),
+                    throw new Exception("Invalid credentials");
+                }
+                var role = user.Roles.SingleOrDefault(r => r.Name == updateuserRole);
+                if (role != null)
+                {
+                    throw new Exception("User already has this role");
+                }
+
+                var newRole = new Role
+                {
+                    UserId = user.Id,
+                    Name = updateuserRole,
+                    CreatedAt = DateTime.Now.ToUniversalTime()
                 };
-                _applicationDbContext.Users.Update(user);
-                _applicationDbContext.SaveChanges();
+
+                user.Roles.Add(newRole);
+
+                await _applicationDbContext.SaveChangesAsync(cancellationToken);
                 return new Response(ToUserModel(user));
             }
+
             private static UserModel ToUserModel(User user)
             {
                 return new UserModel()
                 {
                     Email = user.Email,
-                    UpdatedAt = user.UpdatedAt,
-                    UserRole = user.Role,
                     DateOfBirth = user.BirthDate,
-                    DateOfRegistration = user.DateOfRegistration,
+                    DateOfRegistration = user.CreatedAt,
+                    Roles = user.Roles.Select(role => new RoleModel
+                    {
+                        RoleName = role.Name.ToString(),
+                        CreatedAt = role.CreatedAt
+                    }).ToList()
                 };
             }
         }

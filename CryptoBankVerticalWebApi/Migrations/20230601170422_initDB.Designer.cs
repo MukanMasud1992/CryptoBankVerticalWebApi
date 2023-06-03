@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace CryptoBankVerticalWebApi.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20230529180205_AddAccounts")]
-    partial class AddAccounts
+    [Migration("20230601170422_initDB")]
+    partial class initDB
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -25,21 +25,27 @@ namespace CryptoBankVerticalWebApi.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("CryptoBankVerticalWebApi.Accounts.Domain.Account", b =>
+            modelBuilder.Entity("CryptoBankVerticalWebApi.Features.Accounts.Domain.Account", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<decimal>("Amount")
                         .HasColumnType("numeric");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Currency")
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<DateTime>("DateOfOpening")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<string>("Number")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<long>("UserId")
                         .HasColumnType("bigint");
@@ -49,6 +55,30 @@ namespace CryptoBankVerticalWebApi.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("Accounts");
+                });
+
+            modelBuilder.Entity("CryptoBankVerticalWebApi.Features.Users.Domain.Role", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Name")
+                        .HasColumnType("integer");
+
+                    b.Property<long>("UserId")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Roles");
                 });
 
             modelBuilder.Entity("CryptoBankVerticalWebApi.Features.Users.Domain.User", b =>
@@ -65,21 +95,20 @@ namespace CryptoBankVerticalWebApi.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<DateTime>("DateOfRegistration")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime?>("DeleteAt")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("Password")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<int>("Iterations")
+                        .HasColumnType("integer");
 
-                    b.Property<string>("PasswordSalt")
+                    b.Property<int>("MemorySize")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Parallelism")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("PasswordHashAndSalt")
                         .IsRequired()
                         .HasColumnType("text");
 
@@ -94,14 +123,24 @@ namespace CryptoBankVerticalWebApi.Migrations
                     b.ToTable("Users");
                 });
 
-            modelBuilder.Entity("CryptoBankVerticalWebApi.Accounts.Domain.Account", b =>
+            modelBuilder.Entity("CryptoBankVerticalWebApi.Features.Accounts.Domain.Account", b =>
                 {
                     b.HasOne("CryptoBankVerticalWebApi.Features.Users.Domain.User", "User")
                         .WithMany("Accounts")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("FK_Accounts_User");
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("CryptoBankVerticalWebApi.Features.Users.Domain.Role", b =>
+                {
+                    b.HasOne("CryptoBankVerticalWebApi.Features.Users.Domain.User", "User")
+                        .WithMany("Roles")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("User");
                 });
@@ -109,6 +148,8 @@ namespace CryptoBankVerticalWebApi.Migrations
             modelBuilder.Entity("CryptoBankVerticalWebApi.Features.Users.Domain.User", b =>
                 {
                     b.Navigation("Accounts");
+
+                    b.Navigation("Roles");
                 });
 #pragma warning restore 612, 618
         }
