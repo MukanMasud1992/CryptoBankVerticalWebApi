@@ -51,7 +51,7 @@ namespace CryptoBankVerticalWebApi.Features.Auth.Requests
 
             public async Task<Response> Handle(Request request, CancellationToken cancellationToken)
             {
-                var user = await _applicationDbContext.Users.Include(u => u.Roles).SingleOrDefaultAsync(u => u.Email==request.loginModel.Email);
+                var user = await _applicationDbContext.Users.Include(u => u.Roles).SingleOrDefaultAsync(u => u.Email==request.loginModel.Email, cancellationToken);
                 if (user==null)
                 {
                     throw new Exception("Invalid credentials");
@@ -68,7 +68,7 @@ namespace CryptoBankVerticalWebApi.Features.Auth.Requests
                     user.Iterations = _passwordHasherOptions.Iterations;
                     user.MemorySize = _passwordHasherOptions.MemorySize;
                     _applicationDbContext.Users.Update(user);
-                    await _applicationDbContext.SaveChangesAsync();;
+                    await _applicationDbContext.SaveChangesAsync(cancellationToken);;
                 }
                 string[] parts = user.PasswordHashAndSalt.Split(':');
                 string passwordSalt = parts[1];

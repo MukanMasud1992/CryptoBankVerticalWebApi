@@ -27,7 +27,7 @@ namespace CryptoBankVerticalWebApi.Features.Accounts.Requests
                 {
                     var isExistUser = await applicationDbContext.Users.AnyAsync(user => user.Id == x);
                     return isExistUser;
-                }).WithMessage("Entered user non in system");
+                }).WithMessage("User does not exist");
             }
         }
 
@@ -42,7 +42,7 @@ namespace CryptoBankVerticalWebApi.Features.Accounts.Requests
 
             public async Task<Response> Handle(Request request, CancellationToken cancellationToken)
             {
-                var accounts = await _applicationDbContext.Accounts.Where(x => x.UserId == request.userId).ToListAsync();
+                var accounts = await _applicationDbContext.Accounts.Where(x => x.UserId == request.userId).ToListAsync(cancellationToken);
                 List<AccountModel> accountModels = accounts?.Select(account => new AccountModel()
                 {
                     Id = account.Id,

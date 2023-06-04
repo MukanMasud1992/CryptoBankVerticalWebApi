@@ -46,7 +46,7 @@ namespace CryptoBankVerticalWebApi.Features.Accounts.Requests
 
             public async Task<Response> Handle(Request request, CancellationToken cancellationToken)
             {
-                var accounts = await _applicationDbContext.Accounts.Where(a=>a.UserId==request.userId).CountAsync();
+                var accounts = await _applicationDbContext.Accounts.Where(a=>a.UserId==request.userId).CountAsync(cancellationToken);
                 if (accounts < _options.MaxAccountsPerUser)
                 {
                     var account = new Account()
@@ -57,7 +57,7 @@ namespace CryptoBankVerticalWebApi.Features.Accounts.Requests
                         CreatedAt = DateTime.UtcNow.ToUniversalTime(),
                         UserId = request.userId
                     };
-                    await _applicationDbContext.Accounts.AddAsync(account);
+                    await _applicationDbContext.Accounts.AddAsync(account,cancellationToken);
                     await _applicationDbContext.SaveChangesAsync(cancellationToken);
                     return new Response(new AccountModel()
                     {
