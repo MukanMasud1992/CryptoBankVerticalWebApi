@@ -3,6 +3,7 @@ using CryptoBankVerticalWebApi.Features.Accounts.Model;
 using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 
 namespace CryptoBankVerticalWebApi.Features.Accounts.Requests
 {
