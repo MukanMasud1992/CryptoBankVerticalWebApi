@@ -45,7 +45,8 @@ namespace CryptoBankVerticalWebApi.Features.Accounts.Requests
             public async Task<Response> Handle(Request request, CancellationToken cancellationToken)
             {
                 var count = await _applicationDbContext.Accounts
-                    .Where(account => account.CreatedAt>=request.start && account.CreatedAt<=request.end).GroupBy(a=>a.CreatedAt)
+                    .Where(account => account.CreatedAt>=request.start && account.CreatedAt<=request.end)
+                    .GroupBy(a=>a.CreatedAt)
                     .CountAsync();
                 return new Response(count);
             }
