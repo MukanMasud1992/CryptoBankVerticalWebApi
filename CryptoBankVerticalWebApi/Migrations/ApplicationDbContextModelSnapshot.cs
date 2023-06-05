@@ -54,41 +54,6 @@ namespace CryptoBankVerticalWebApi.Migrations
                     b.ToTable("Accounts");
                 });
 
-            modelBuilder.Entity("CryptoBankVerticalWebApi.Features.Auth.Model.RefreshToken", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime>("ExpiryDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<long>("ReplacedByNextToken")
-                        .HasColumnType("bigint");
-
-                    b.Property<bool>("Revoke")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("Token")
-                        .IsRequired()
-                        .HasMaxLength(1000)
-                        .HasColumnType("character varying(1000)");
-
-                    b.Property<long>("userId")
-                        .HasColumnType("bigint");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("userId");
-
-                    b.ToTable("RefreshTokens");
-                });
-
             modelBuilder.Entity("CryptoBankVerticalWebApi.Features.Users.Domain.Role", b =>
                 {
                     b.Property<long>("Id")
@@ -163,16 +128,6 @@ namespace CryptoBankVerticalWebApi.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("CryptoBankVerticalWebApi.Features.Auth.Model.RefreshToken", b =>
-                {
-                    b.HasOne("CryptoBankVerticalWebApi.Features.Users.Domain.User", "User")
-                        .WithMany("RefreshTokens")
-                        .HasForeignKey("userId")
-                        .IsRequired();
-
-                    b.Navigation("User");
-                });
-
             modelBuilder.Entity("CryptoBankVerticalWebApi.Features.Users.Domain.Role", b =>
                 {
                     b.HasOne("CryptoBankVerticalWebApi.Features.Users.Domain.User", "User")
@@ -187,8 +142,6 @@ namespace CryptoBankVerticalWebApi.Migrations
             modelBuilder.Entity("CryptoBankVerticalWebApi.Features.Users.Domain.User", b =>
                 {
                     b.Navigation("Accounts");
-
-                    b.Navigation("RefreshTokens");
 
                     b.Navigation("Roles");
                 });
