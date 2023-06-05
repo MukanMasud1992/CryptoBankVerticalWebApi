@@ -14,7 +14,7 @@ namespace CryptoBankVerticalWebApi.Features.Auth.Requests
     public static class LoginUser
     {
         public record Request(LoginModel loginModel) : IRequest<Response>;
-        public record Response(string jwt);
+        public record Response(string jwt,string refreshToken);
 
         public class RequestValidator : AbstractValidator<Request>
         {
@@ -51,7 +51,10 @@ namespace CryptoBankVerticalWebApi.Features.Auth.Requests
 
             public async Task<Response> Handle(Request request, CancellationToken cancellationToken)
             {
-                var user = await _applicationDbContext.Users.Include(u => u.Roles).SingleOrDefaultAsync(u => u.Email==request.loginModel.Email, cancellationToken);
+                var user = await _applicationDbContext.Users
+                    .Include(u => u.Roles)
+                    .Include(u=>u.RefreshTokens)
+                    .SingleOrDefaultAsync(u => u.Email==request.loginModel.Email, cancellationToken);
                 if (user==null)
                 {
                     throw new Exception("Invalid credentials");
@@ -80,8 +83,10 @@ namespace CryptoBankVerticalWebApi.Features.Auth.Requests
                     throw new Exception("Invalid credentials");
                 }
 
-                var jwt = await _tokenGenerateService.GenerateToken(user);
-                return new Response(jwt);
+                var (jwt, refreshToken) = await _tokenGenerateService.GenerateTokensAsync(user,cancellationToken);
+           
+
+                return new Response(jwt,refreshToken);
             }
         }
     }
